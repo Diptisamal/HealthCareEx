@@ -14,6 +14,7 @@ import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import in.nareshit.dipti.entity.Specialization;
+import in.nareshit.dipti.exception.SpecializationNotFoundException;
 import in.nareshit.dipti.service.ISpecializationService;
 import in.nareshit.dipti.view.SpecializationExcelView;
 
@@ -71,13 +72,27 @@ public class SpecializationController {
 			RedirectAttributes attributes
 			) 
 	{
+		try {
 		service.removeSpecialization(id);
 		attributes.addAttribute("message", "Record ("+id+") is removed");
+		}catch(SpecializationNotFoundException e){
+			e.printStackTrace();
+			attributes.addAttribute("message",e.getMessage());
+			
+		}
 		return "redirect:all";
 	}
 	
 	/**
 	 * 5. Fetch Data into Edit page
+	 *  End user clicks on Link, may enter ID manually.
+	 *  If entered id is present in DB
+	 *     > Load Row as Object
+	 *     > Send to Edit Page
+	 *     > Fill in Form
+	 *  Else
+	 *    > Redirect to all (Data Page)
+	 *    > Show Error message (Not found)     
 	 */
 	@GetMapping("/edit")
 	public String showEditPage(
@@ -85,9 +100,18 @@ public class SpecializationController {
 			Model model
 			) 
 	{
+		String page=null;
+		try {
+			
 		Specialization spec = service.getOneSpecialization(id);
 		model.addAttribute("specialization", spec);
-		return "SpecializationEdit";
+		page= "SpecializationEdit";
+		}catch(SpecializationNotFoundException e) {
+			e.printStackTrace();
+			model.addAttribute("message", e.getMessage());
+			page="redirect:all";
+		}
+		return page;
 	}
 	
 	/***
